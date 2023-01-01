@@ -51,6 +51,11 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+# Build files
+build/
+**/CMakeFiles/
+**/cmake_install.cmake
+*.ninja
 
 # Misc stuff
 .DS_Store

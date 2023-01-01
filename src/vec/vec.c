@@ -1,7 +1,9 @@
 #include "vec.h"
 
 #include <stdlib.h>
+#include <string.h>
 
+#include "ccontain-err.h"
 #include "common.h"
 
 typedef struct vec_ctx_s {
@@ -38,16 +40,6 @@ static size_t step_align(const size_t el_bytes) {
     return ALIGN_UP(el_bytes, STEP_LONG);
 }
 
-static inline ccontain_err_t _vec_resize(vec_t *self, const size_t new_size) {
-    void * tmp = NULL;
-
-    vec_reserve(self, new_size);
-
-    ctx->size = new_size;
-
-    return CCONTAIN_SUCCESS;
-}
-
 static inline ccontain_err_t _vec_reserve(vec_t *self, const size_t new_capacity) {
     void * tmp;
     vec_ctx_t *vec_ctx = VEC_CTX(self);
@@ -58,28 +50,38 @@ static inline ccontain_err_t _vec_reserve(vec_t *self, const size_t new_capacity
         } while (vec_ctx->capacity < new_capacity);
 
         tmp = VEC_ALLOC(vec_ctx, VEC_CAPACITY_BYTES(vec_ctx));
-        CCONTAIN_NULL(ctx->mem == NULL, {
+        CCONTAIN_NULL(vec_ctx->mem, {
             return CCONTAIN_EALLOC;
         });
 
-        if (ctx->mem != NULL) {
-            memcpy(tmp, ctx->mem, VEC_SIZE_BYTES);
-            free(ctx->mem);
+        if (vec_ctx->mem != NULL) {
+            memcpy(tmp, vec_ctx->mem, VEC_SIZE_BYTES(vec_ctx));
+            free(vec_ctx->mem);
         }
-        ctx->mem = tmp;
-        ctx->capacity = new_capacity;
+        vec_ctx->mem = tmp;
+        vec_ctx->capacity = new_capacity;
     }
     
     return CCONTAIN_SUCCESS;
 }
 
+static inline ccontain_err_t _vec_resize(vec_t *self, const size_t new_size) {
+    void * tmp = NULL;
+    vec_ctx_t *vec_ctx = VEC_CTX(self);
 
-const vec_t *vec_create(vec_params_t *params) {
+    _vec_reserve(self, new_size);
+
+    vec_ctx->size = new_size;
+
+    return CCONTAIN_SUCCESS;
+}
+
+vec_t *vec_create(const vec_params_t *params) {
     vec_t *vec = NULL;
     vec_ctx_t *vec_ctx = NULL;
 
     vec = ALLOC(sizeof(vec_t));
-    CCONTAIN_NULL_GOTO(vec, end);
+    CCONTAIN_NULL_GOTO(vec_ctx, end);
 
     vec_ctx = ALLOC(sizeof(vec_ctx_t));
     CCONTAIN_NULL_GOTO(vec_ctx, cleanup_vec);
@@ -92,9 +94,9 @@ const vec_t *vec_create(vec_params_t *params) {
     vec_ctx->free_func = params->free_func;
     vec_ctx->mem = NULL;
 
-    CCONTAIN_STATUS_GOTO(_vec_resize(vec_ctx_t, vec_ctx->size), cleanup_ctx);
+    CCONTAIN_STATUS_GOTO(_vec_resize(vec, vec_ctx->size), cleanup_ctx);
 
-    return (vec_t *)vec_ctx;
+    return (vec_t *)vec;
 
 cleanup_ctx:
     free(vec_ctx);
@@ -105,11 +107,10 @@ end:
 }
 
 void vec_destroy(vec_t *self) {
-    vec_ctx_t *vec_ctx = VEC_CTX(ctx);
+    vec_ctx_t *vec_ctx = VEC_CTX(self);
     VEC_FREE(vec_ctx, vec_ctx->mem);
     FREE(vec_ctx);
     FREE(self);
-    return CCONTAIN_SUCCESS;
 }
 
 static inline vec_el_ptr_t _vec_at(vec_t *self, const size_t idx) {
@@ -125,9 +126,10 @@ static inline vec_el_ptr_t _vec_at(vec_t *self, const size_t idx) {
  * @return     The ccontain error.
  */
 static ccontain_err_t vec_append(vec_t *self, const vec_el_ptr_t el_ptr) {
-    CCONTAIN_STATUS_RETURN(_vec_resize(self, ctx->size + 1), {});
+    vec_ctx_t *vec_ctx = VEC_CTX(self);
+    CCONTAIN_STATUS_RETURN(_vec_resize(self, vec_ctx->size + 1), {});
 
-    memcpy(_vec_at(self, ctx->size - 1), el_ptr, ctx->el_bytes);
+    memcpy(_vec_at(self, vec_ctx->size - 1), el_ptr, vec_ctx->el_bytes);
     return CCONTAIN_SUCCESS;
 }
 
@@ -153,12 +155,12 @@ vec_el_ptr_t vec_at(vec_t *self, const size_t idx) {
  * @return     The ccontain error.
  */
 static ccontain_err_t vec_insert(vec_t *self, const vec_el_ptr_t el_ptr, const size_t idx) {
-    vec_ctx_t *vec_ctx = VEC_CTX(ctx);
+    vec_ctx_t *vec_ctx = VEC_CTX(self);
     size_t i = idx;
-    CCONTAIN_STATUS_RETURN(_vec_resize(self, ctx->size + 1), {});
+    CCONTAIN_STATUS_RETURN(_vec_resize(self, vec_ctx->size + 1), {});
 
     // TODO: Optimize
-    for (; i < ctx->size - 1; ++i) {
+    for (; i < vec_ctx->size - 1; ++i) {
         memcpy(_vec_at(self, i + 1), _vec_at(self, i), vec_ctx->el_bytes);
     }
 
@@ -175,14 +177,14 @@ static ccontain_err_t vec_insert(vec_t *self, const vec_el_ptr_t el_ptr, const s
  * @return     The ccontain error.
  */
 static ccontain_err_t vec_remove(vec_t *self, const size_t idx) {
-    vec_ctx_t *vec_ctx = VEC_CTX(ctx);
+    vec_ctx_t *vec_ctx = VEC_CTX(self);
     size_t i = idx;
 
     // TODO: Optimize
-    for (; i < ctx->size - 1; ++i) {
+    for (; i < vec_ctx->size - 1; ++i) {
         memcpy(_vec_at(self, i), _vec_at(self, i + 1), vec_ctx->el_bytes);
     }
-    CCONTAIN_STATUS_RETURN(_vec_resize(self, ctx->size), {});
+    CCONTAIN_STATUS_RETURN(_vec_resize(self, vec_ctx->size), {});
     return CCONTAIN_SUCCESS;
 }
 

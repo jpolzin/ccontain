@@ -1,3 +1,8 @@
+
+
+#ifndef CCONTAIN_ERR_H
+#define CCONTAIN_ERR_H
+
 #ifdef DEBUG
 #define CCONTAIN_COND(cond, code) \
     if ((cond)) {\
@@ -17,7 +22,6 @@
         return (rc);\
     })
 
-
 #define CCONTAIN_STATUS_GOTO(rc, label) \
     CCONTAIN_STATUS(rc, { goto label; }) 
 
@@ -35,3 +39,5 @@ typedef enum ccontain_err_s {
     CCONTAIN_EINVAL,
     CCONTAIN_EFAILURE,
 } ccontain_err_t;
+
+#endif /* CCONTAIN_ERR_H */
