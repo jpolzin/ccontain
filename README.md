@@ -29,13 +29,13 @@ Primary data structures should follow the convention `ccontain_<module>_t`. Memb
 Example:
 ```
 typedef struct ccontain_vec_s {
-    ccontain_err_t (*append) (vec_t *self, const vec_el_ptr_t el);
-    vec_el_ptr_t (*at) (vec_t *self, const size_t idx);
-    ccontain_err_t (*insert) (vec_t *self, const vec_el_ptr_t el_ptr, const size_t idx);
-    ccontain_err_t (*remove) (vec_t *self, const size_t idx);
-    size_t (*size) (vec_t *self);
-    ccontain_err_t (*reserve) (vec_t *self, const size_t new_capacity);
-    ccontain_err_t (*resize) (vec_t *self, const size_t new_size);
+    ccontain_err_t (*append) (ccontain_vec_t *self, const ccontain_vec_el_ptr_t el);
+    ccontain_vec_el_ptr_t (*at) (ccontain_vec_t *self, const size_t idx);
+    ccontain_err_t (*insert) (ccontain_vec_t *self, const ccontain_vec_el_ptr_t el_ptr, const size_t idx);
+    ccontain_err_t (*remove) (ccontain_vec_t *self, const size_t idx);
+    size_t (*size) (ccontain_vec_t *self);
+    ccontain_err_t (*reserve) (ccontain_vec_t *self, const size_t new_capacity);
+    ccontain_err_t (*resize) (ccontain_vec_t *self, const size_t new_size);
     ccontain_vec_priv_t priv;
 } ccontain_vec_t;
 ```

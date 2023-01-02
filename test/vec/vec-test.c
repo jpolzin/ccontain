@@ -15,12 +15,12 @@
 }
 
 static void create_destroy() {
-    vec_params_t params = {0};
+    ccontain_vec_params_t params = {0};
     INIT_PARAMS_DEFAULT(&params);
 
-    vec_t * vec = vec_create(&params);
+    ccontain_vec_t * vec = ccontain_vec_create(&params);
     ASSERT(vec != NULL);
-    vec_destroy(vec);
+    ccontain_vec_destroy(vec);
     PASSED();
 }
 
@@ -29,10 +29,10 @@ static void create_destroy() {
 static void size_sweep() {
     const size_t max_el_size = 128;
     const size_t max_len = 50;
-    vec_params_t params = {0};
+    ccontain_vec_params_t params = {0};
     size_t i = 0;
     size_t el_size = 1;
-    vec_t * vec = NULL;
+    ccontain_vec_t * vec = NULL;
 
     uint8_t *tmp, *tmp_end;
     uint8_t *buf;
@@ -42,7 +42,7 @@ static void size_sweep() {
     for (; el_size < max_el_size; ++el_size) {
         INIT_PARAMS_DEFAULT(&params);
         params.el_bytes = el_size;
-        vec = vec_create(&params);
+        vec = ccontain_vec_create(&params);
         ASSERT(vec != NULL);
 
         // Set each byte in the buf equal to i
@@ -61,7 +61,7 @@ static void size_sweep() {
             }
         }
 
-        vec_destroy(vec);
+        ccontain_vec_destroy(vec);
     }
 
     FREE(buf);
