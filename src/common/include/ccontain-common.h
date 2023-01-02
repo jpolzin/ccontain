@@ -23,8 +23,11 @@ static inline void * assert_alloc(const size_t sz, void * (*allocator)(size_t sz
 #define ALLOC(sz) malloc((sz))
 #endif
 
+#define FREE(ptr) free(ptr)
+
+
 #define ALIGN_UP(val, alignment) ((((val) / (alignment)) + ((val) % (alignment) == 0 ? 0 : 1)) * (alignment))
 
-#define FREE(ptr) free(ptr)
+#define BYTE_SHIFT(val, byteshift) (((uintptr_t)(val)) << ((byteshift) * 8))
 
 #endif /* CCONTAIN_COMMON_H */
