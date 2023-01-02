@@ -1,3 +1,5 @@
+#!/usr/local/bin/python3
+
 import subprocess
 import typing
 import os
