@@ -1,10 +1,10 @@
-#include "vec.h"
+#include "ccontain-vec.h"
 
 #include <stdlib.h>
 #include <string.h>
 
 #include "ccontain-err.h"
-#include "common.h"
+#include "ccontain-common.h"
 
 typedef struct vec_ctx_s {
     void *mem;

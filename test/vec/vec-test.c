@@ -1,5 +1,5 @@
-#include "common.h"
-#include "vec.h"
+#include "ccontain-common.h"
+#include "ccontain-vec.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -52,7 +52,7 @@ static void size_sweep() {
             ASSERT(vec->size(vec) == i + 1);
         }
 
-        // Look at each byte to make sure it matches idx
+        // Look at each byte to make sure it matches i
         for (i = 0; i < max_len; ++i) {
             tmp = vec->at(vec, i);
             tmp_end = tmp + el_size;

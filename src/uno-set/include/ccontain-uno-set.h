@@ -1,4 +1,4 @@
-#include "common.h"
+#include "ccontain-common.h"
 
 #include <stdint.h>
 
@@ -10,8 +10,6 @@
 
 
 typedef void *uno_set_priv_t;
-
-#define UNO_SET_RETTYPE(rettype) uno_set_return_##rettype_t
 
 /*
 Possible params:
