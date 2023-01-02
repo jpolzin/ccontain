@@ -17,7 +17,7 @@ typedef struct vec_ctx_s {
 } vec_ctx_t;
 
 #define VEC_CTX(vec) ((vec_ctx_t *)((vec)->priv))
-#define VEC_ALLOC(vec_ctx, sz) ASSERT_ALLOC(sz, vec_ctx->allocate_func)
+#define VEC_ALLOC(vec_ctx, sz) assert_alloc(sz, vec_ctx->allocate_func)
 #define VEC_FREE(vec_ctx, ptr) (vec_ctx->free_func((ptr)))
 
 #define VEC_SIZE_BYTES(vec_ctx) ((vec_ctx)->size * (vec_ctx)->el_bytes_step)
@@ -28,6 +28,69 @@ typedef struct vec_ctx_s {
 #define STEP_MED sizeof(int)
 #define STEP_LONG sizeof(long long)
 
+/**
+ * @brief      Appends a value, resizing or reallocating if needed.
+ *
+ * @param      self    The object
+ * @param[in]  el_ptr  Pointer to value to append
+ *
+ * @return     The ccontain error.
+ */
+static ccontain_err_t vec_append(vec_t *self, const vec_el_ptr_t el_ptr);
+
+/**
+ * @brief      Returns a pointer to the value at idx. Does not check the validity of input parameters.
+ *
+ * @param      self  The object
+ * @param[in]  idx   Index to access
+ *
+ * @return     Pointer to the element in the vector.
+ */
+static vec_el_ptr_t vec_at(vec_t *self, const size_t idx);
+
+/**
+ * @brief      Inserts a value at idx, shifting subsequent elements up one.
+ *
+ * @param      self    The object
+ * @param[in]  el_ptr  Pointer to element to insert
+ * @param[in]  idx     Index to insert element at
+ *
+ * @return     The ccontain error.
+ */
+static ccontain_err_t vec_insert(vec_t *self, const vec_el_ptr_t el_ptr, const size_t idx);
+
+/**
+ * @brief      Removes the value at idx, shifting subsequent elements back one.
+ *
+ * @param      self  The object
+ * @param[in]  idx   Index to remove element from
+ *
+ * @return     The ccontain error.
+ */
+static ccontain_err_t vec_remove(vec_t *self, const size_t idx);
+
+static size_t vec_size(vec_t *self);
+
+/**
+ * @brief      Reserves memory for at least new_capacity elements. Size is unaffected.
+ * @details    If current_capacity >= new_capacity, then the vector is unaffected.
+ *
+ * @param      self          The object
+ * @param[in]  new_capacity  Number of elements to reserve memory for
+ *
+ * @return     The ccontain error.
+ */
+static ccontain_err_t vec_reserve(vec_t *self, const size_t new_capacity);
+
+/**
+ * @brief      Resizes the vector to contain new_size elements. If new_size is larger than the current size, the new values are not initialized. If it is smaller than the current size, the last elements are truncated.
+ *
+ * @param      self      The object
+ * @param[in]  new_size  The new size
+ *
+ * @return     The ccontain error.
+ */
+static ccontain_err_t vec_resize(vec_t *self, const size_t new_size);
 
 static size_t step_align(const size_t el_bytes) {
     if (el_bytes <= STEP_SMALL) {
@@ -45,9 +108,13 @@ static inline ccontain_err_t _vec_reserve(vec_t *self, const size_t new_capacity
     vec_ctx_t *vec_ctx = VEC_CTX(self);
 
     if (vec_ctx->capacity < new_capacity) {
-        do {
+        if (vec_ctx->capacity == 0) {
+            vec_ctx->capacity = 1;
+        }
+
+        while (vec_ctx->capacity < new_capacity) {
             vec_ctx->capacity *= 2;
-        } while (vec_ctx->capacity < new_capacity);
+        } 
 
         tmp = VEC_ALLOC(vec_ctx, VEC_CAPACITY_BYTES(vec_ctx));
         CCONTAIN_NULL(vec_ctx->mem, {
@@ -83,6 +150,14 @@ vec_t *vec_create(const vec_params_t *params) {
     vec = ALLOC(sizeof(vec_t));
     CCONTAIN_NULL_GOTO(vec_ctx, end);
 
+    vec->append = vec_append;
+    vec->at = vec_at;
+    vec->insert = vec_insert;
+    vec->remove = vec_remove;
+    vec->size = vec_size;
+    vec->reserve = vec_reserve;
+    vec->resize = vec_resize;
+
     vec_ctx = ALLOC(sizeof(vec_ctx_t));
     CCONTAIN_NULL_GOTO(vec_ctx, cleanup_vec);
 
@@ -93,6 +168,8 @@ vec_t *vec_create(const vec_params_t *params) {
     vec_ctx->allocate_func = params->allocate_func;
     vec_ctx->free_func = params->free_func;
     vec_ctx->mem = NULL;
+
+    vec->priv = vec_ctx;
 
     CCONTAIN_STATUS_GOTO(_vec_resize(vec, vec_ctx->size), cleanup_ctx);
 
@@ -117,14 +194,6 @@ static inline vec_el_ptr_t _vec_at(vec_t *self, const size_t idx) {
     return (vec_el_ptr_t)((uintptr_t)VEC_CTX(self)->mem + idx * VEC_CTX(self)->el_bytes_step);
 }
 
-/**
- * @brief      Appends a value, resizing or reallocating if needed.
- *
- * @param      self    The object
- * @param[in]  el_ptr  Pointer to value to append
- *
- * @return     The ccontain error.
- */
 static ccontain_err_t vec_append(vec_t *self, const vec_el_ptr_t el_ptr) {
     vec_ctx_t *vec_ctx = VEC_CTX(self);
     CCONTAIN_STATUS_RETURN(_vec_resize(self, vec_ctx->size + 1), {});
@@ -133,27 +202,10 @@ static ccontain_err_t vec_append(vec_t *self, const vec_el_ptr_t el_ptr) {
     return CCONTAIN_SUCCESS;
 }
 
-/**
- * @brief      Returns a pointer to the value at idx. Does not check the validity of input parameters.
- *
- * @param      self  The object
- * @param[in]  idx   Index to access
- *
- * @return     Pointer to the element in the vector.
- */
 vec_el_ptr_t vec_at(vec_t *self, const size_t idx) {
     return _vec_at(self, idx);
 }
 
-/**
- * @brief      Inserts a value at idx, shifting subsequent elements up one.
- *
- * @param      self    The object
- * @param[in]  el_ptr  Pointer to element to insert
- * @param[in]  idx     Index to insert element at
- *
- * @return     The ccontain error.
- */
 static ccontain_err_t vec_insert(vec_t *self, const vec_el_ptr_t el_ptr, const size_t idx) {
     vec_ctx_t *vec_ctx = VEC_CTX(self);
     size_t i = idx;
@@ -168,14 +220,6 @@ static ccontain_err_t vec_insert(vec_t *self, const vec_el_ptr_t el_ptr, const s
     return CCONTAIN_SUCCESS;
 }
 
-/**
- * @brief      Removes the value at idx, shifting subsequent elements back one.
- *
- * @param      self  The object
- * @param[in]  idx   Index to remove element from
- *
- * @return     The ccontain error.
- */
 static ccontain_err_t vec_remove(vec_t *self, const size_t idx) {
     vec_ctx_t *vec_ctx = VEC_CTX(self);
     size_t i = idx;
@@ -188,27 +232,14 @@ static ccontain_err_t vec_remove(vec_t *self, const size_t idx) {
     return CCONTAIN_SUCCESS;
 }
 
-/**
- * @brief      Reserves memory for at least new_capacity elements. Size is unaffected.
- * @details    If current_capacity >= new_capacity, then the vector is unaffected.
- *
- * @param      self          The object
- * @param[in]  new_capacity  Number of elements to reserve memory for
- *
- * @return     The ccontain error.
- */
+static size_t vec_size(vec_t *self) {
+    return VEC_CTX(self)->size;
+}
+
 static ccontain_err_t vec_reserve(vec_t *self, const size_t new_capacity) {
     return _vec_reserve(self, new_capacity);
 }
 
-/**
- * @brief      Resizes the vector to contain new_size elements. If new_size is larger than the current size, the new values are not initialized. If it is smaller than the current size, the last elements are truncated.
- *
- * @param      self      The object
- * @param[in]  new_size  The new size
- *
- * @return     The ccontain error.
- */
 static ccontain_err_t vec_resize(vec_t *self, const size_t new_size) {
     return _vec_resize(self, new_size);
 }

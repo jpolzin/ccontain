@@ -4,19 +4,21 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 
-#define ASSERT(cond) if ((cond)) { exit (1); }
+#define ASSERT(cond) if (!(cond)) {\
+    printf("Assertion failed in %s on line %zu. Condition: %s\n", __FILE__, (size_t)__LINE__, #cond);\
+    exit (1);\
+}
 
-#define ASSERT_ALLOC(sz, allocator) \
-    ({\
-        void * __ptr = allocator((sz));\
-        ASSERT(__ptr != NULL);\
-        __ptr;\
-    }) 
+static inline void * assert_alloc(const size_t sz, void * (*allocator)(size_t sz)) {
+    void * __ptr = allocator((sz));
+    ASSERT(__ptr != NULL);
+    return __ptr;
+}
 
 #ifdef DEBUG
-#define ALLOC(sz) \
-    ASSERT_ALLOC(sz, malloc)
+#define ALLOC(sz) assert_alloc(sz, malloc)
 #else
 #define ALLOC(sz) malloc((sz))
 #endif

@@ -24,7 +24,7 @@ typedef struct vec_s vec_t;
 typedef struct vec_s {
     ccontain_err_t (*append) (vec_t *self, const vec_el_ptr_t el);
     vec_el_ptr_t (*at) (vec_t *self, const size_t idx);
-    ccontain_err_t (*insert) (vec_t *self, const vec_el_ptr_t *el_ptr, const size_t idx);
+    ccontain_err_t (*insert) (vec_t *self, const vec_el_ptr_t el_ptr, const size_t idx);
     ccontain_err_t (*remove) (vec_t *self, const size_t idx);
     size_t (*size) (vec_t *self);
     ccontain_err_t (*reserve) (vec_t *self, const size_t new_capacity);
