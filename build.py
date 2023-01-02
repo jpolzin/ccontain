@@ -12,8 +12,12 @@ def run_command(command: str, **kwargs):
     subprocess.run(command.split(' '))
 
 
-run_command(f'mkdir -p {build_path}')
+try:
+    os.mkdir(f'{build_path}')
+except FileExistsError:
+    pass
+os.chdir(f'{build_path}')
 run_command(f'cd {build_path}')
-run_command(f'cmake -DCMAKE_BUILD_TYPE=Debug {file_path}')
-run_command(f'cmake --build {build_path}')
-run_command(f'cd {initial_path}')
+run_command(f'cmake -DCMAKE_BUILD_TYPE=Debug ..')
+run_command(f'cmake --build .')
+os.chdir(f'{initial_path}')
