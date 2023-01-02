@@ -3,12 +3,15 @@ CContain is a C library that aims to implement standard data structures with sim
 
 ## Philosophies
 1. Efficiency: CContain APIs should be as low overhead as possible, both in terms of memory and performance.
-2. Simplicity: CContain will provide the bare minimum to implement the data structure. Any "helper" interfaces are the burden of the client, unless it is dramatically more efficient for CContain to implement them.
-3. Flexibility: CContain should make few assumptions about the platform or application. Instead, the interfaces should enable developers to provide the optimal parameters for their own applications.
+2. Simplicity: CContain will provide the bare minimum to implement the data structure.
+Any "helper" interfaces are the burden of the client, unless it is dramatically more efficient for CContain to implement them.
+3. Flexibility: CContain should make few assumptions about the platform or application.
+Instead, the interfaces should enable developers to provide the optimal parameters for their own applications.
 
 ## Style
 ### File name format
-All C source files should follow the format `ccontain-<file name>.<c or h>`. Use dashes, not underscores, to delimit words.
+All C source files should follow the format `ccontain-<file name>.<c or h>`.
+Use dashes, not underscores, to delimit words.
 
 ### Data structures
 External data structure types should be typedef'ed and  follow `ccontain_<module>_<extra>_t`.
@@ -19,8 +22,10 @@ Example: `ccontain_vec_params_t`
 External function interfaces should follow the format `ccontain_<module>_<function>()`.
 Example: `ccontain_vec_create()`
 
-Primary data structures (e.g. module interfaces) must implement a struct with function pointers to any members and one opaque handle to a private structure. While this does prevent inlining, it allows CContain to choose different implementations for each member depending on the initial parameters.  
-They should be named `ccontain_<module>_t`. Members do not need to be namespaced.
+Primary data structures (e.g. module interfaces) must implement a struct with function pointers to any members and one opaque handle to a private structure.
+While this does prevent inlining, it allows CContain to choose different implementations for each member depending on the initial parameters. 
+
+Primary data structures should follow the convention `ccontain_<module>_t`. Members do not need to be namespaced.
 Example:
 ```
 typedef struct ccontain_vec_s {
@@ -55,5 +60,7 @@ C code style is fairly flexible, but be sure to follow these rules.
 
 ## Questions
 ### Why not just link C code to C++ and use the C++ STL?
-For the same reasons that some projects use C over C++. Including any C++ STL in your project requires that the platform support that library, which may not be possible. Embedded systems and kernel development are notable examples.
+For the same reasons that some projects use C over C++.
+Including any C++ STL in your project requires that the platform support that library, which may not be possible.
+Embedded systems and kernel development are notable examples.
 
