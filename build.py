@@ -19,7 +19,6 @@ try:
 except FileExistsError:
     pass
 os.chdir(f'{build_path}')
-run_command(f'cd {build_path}')
 run_command(f'cmake -DCMAKE_BUILD_TYPE=Debug ..')
 run_command(f'cmake --build .')
 os.chdir(f'{initial_path}')

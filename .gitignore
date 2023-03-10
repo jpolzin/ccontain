@@ -60,4 +60,5 @@ CMakeCache.txt
 
 # Misc stuff
 .DS_Store
+.vscode
 notes/
