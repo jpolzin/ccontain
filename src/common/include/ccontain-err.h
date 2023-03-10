@@ -1,5 +1,3 @@
-
-
 #ifndef CCONTAIN_ERR_H
 #define CCONTAIN_ERR_H
 

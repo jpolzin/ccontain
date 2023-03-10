@@ -1,10 +1,7 @@
-
-
 #ifndef CCONTAIN_VEC_H
 #define CCONTAIN_VEC_H
 
-#include <stdint.h>
-#include <stdlib.h>
+#include "ccontain-defines.h"
 
 #include "ccontain-err.h"
 
